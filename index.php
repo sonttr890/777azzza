@@ -80,8 +80,9 @@
             font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
-            transition: background 0.3s ease, transform 0.2s ease;
             position: relative;
+            overflow: hidden;
+            transition: background 0.3s ease;
         }
 
         button:disabled {
@@ -91,21 +92,28 @@
 
         button:hover:not(:disabled) {
             background: #357abd;
-            transform: translateY(-2px);
+        }
+
+        .loading {
+            position: relative;
         }
 
         .loading::after {
             content: '';
             position: absolute;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
-            top: 50%;
-            right: 1rem;
-            transform: translateY(-50%);
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 4px;
+            background: #ffffff;
+            opacity: 0.8;
+            animation: loadingBar 1.5s ease-in-out infinite;
+        }
+
+        @keyframes loadingBar {
+            0% { width: 0; }
+            50% { width: 100%; }
+            100% { width: 0; }
         }
 
         .result {
@@ -227,10 +235,6 @@
             opacity: 0.3;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
         @media (max-width: 480px) {
             .container {
                 padding: 1.5rem;
@@ -336,10 +340,17 @@
             const username = document.getElementById('username').value.trim();
 
             try {
-                const response = await fetch(`https://tiktok-info-user.vercel.app/tiktok-info?key=777azza&usertarget=${encodeURIComponent(username)}`);
-                
+                const response = await fetch(`https://tiktok-info-user.vercel.app/tiktok-info?key=777azza&usertarget=${encodeURIComponent(username)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+
                 if (!response.ok) {
-                    throw new Error('Network error: Unable to fetch data');
+                    throw new Error(`Network error: ${response.status} ${response.statusText}`);
                 }
 
                 const data = await response.json();
@@ -367,7 +378,12 @@
 
                 resultDiv.classList.add('show');
             } catch (error) {
-                errorDiv.textContent = error.message || 'An unexpected error occurred';
+                console.error('Fetch Error:', error);
+                let errorMessage = error.message || 'An unexpected error occurred';
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Unable to fetch data. This might be due to CORS restrictions. Try running this on a server with proper CORS handling or use a proxy.';
+                }
+                errorDiv.textContent = errorMessage;
                 errorDiv.classList.add('show');
             } finally {
                 submitBtn.disabled = false;
