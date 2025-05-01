@@ -1,6 +1,30 @@
 <?php
-// This PHP file serves the HTML content with embedded CSS and JS
+// Handle API request server-side to bypass CORS
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
+    $username = trim($_POST['username']);
+    $api_url = "https://tiktok-info-user.vercel.app/tiktok-info?key=777azza&usertarget=" . urlencode($username);
+
+    // Make the API request using PHP
+    $response = @file_get_contents($api_url);
+    
+    if ($response === false) {
+        // Handle API fetch error
+        $error = "Unable to fetch data. The API might be down or the username is invalid.";
+        echo json_encode(['error' => $error]);
+    } else {
+        // Parse the API response
+        $data = json_decode($response, true);
+        if (!$data || !is_array($data) || empty($data) || !isset($data[0])) {
+            $error = "User not found or invalid data returned.";
+            echo json_encode(['error' => $error]);
+        } else {
+            echo $response; // Return the API response to the client
+        }
+    }
+    exit;
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -196,7 +220,7 @@
             font-size: 0.9rem;
             color: #b0b0b0;
             text-align: center;
-            margin: 1rem 0;
+            margin: 1rem: 0;
         }
 
         .profile-link {
@@ -259,10 +283,10 @@
     <div id="particles-js"></div>
     <div class="container">
         <h1>TikTok User Info</h1>
-        <form id="tiktokForm">
+        <form id="tiktokForm" method="POST">
             <div class="input-group">
                 <label for="username">TikTok Username (without @)</label>
-                <input type="text" id="username" name="username" placeholder="e.g. tiktok" required>
+                <input type="text" id="username" name="username" placeholder="e.g. aden.ffidn" required>
             </div>
             <button type="submit" id="submitBtn">Get Info</button>
         </form>
@@ -337,16 +361,12 @@
             submitBtn.classList.add('loading');
             submitBtn.textContent = 'Fetching...';
 
-            const username = document.getElementById('username').value.trim();
+            const formData = new FormData(form);
 
             try {
-                const response = await fetch(`https://tiktok-info-user.vercel.app/tiktok-info?key=777azza&usertarget=${encodeURIComponent(username)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                    },
-                    mode: 'cors',
-                    credentials: 'omit'
+                const response = await fetch('', { // Empty URL means the request goes to the same PHP file
+                    method: 'POST',
+                    body: formData
                 });
 
                 if (!response.ok) {
@@ -354,6 +374,10 @@
                 }
 
                 const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
 
                 if (!data || !Array.isArray(data) || data.length === 0 || !data[0]) {
                     throw new Error('User not found or invalid data returned');
@@ -378,12 +402,8 @@
 
                 resultDiv.classList.add('show');
             } catch (error) {
-                console.error('Fetch Error:', error);
-                let errorMessage = error.message || 'An unexpected error occurred';
-                if (error.message.includes('Failed to fetch')) {
-                    errorMessage = 'Unable to fetch data. This might be due to CORS restrictions. Try running this on a server with proper CORS handling or use a proxy.';
-                }
-                errorDiv.textContent = errorMessage;
+                console.error('Error:', error);
+                errorDiv.textContent = error.message || 'An unexpected error occurred';
                 errorDiv.classList.add('show');
             } finally {
                 submitBtn.disabled = false;
