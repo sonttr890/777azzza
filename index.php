@@ -282,11 +282,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
 <body>
     <div id="particles-js"></div>
     <div class="container">
-        <h1>TikTok User Info</h1>
+        <h1>TikTok User Info By Sonttr777</h1>
         <form id="tiktokForm" method="POST">
             <div class="input-group">
                 <label for="username">TikTok Username (without @)</label>
-                <input type="text" id="username" name="username" placeholder="e.g. aden.ffidn" required>
+                <input type="text" id="username" name="username" placeholder="contoh ryakka3" required>
             </div>
             <button type="submit" id="submitBtn">Get Info</button>
         </form>
